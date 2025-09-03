@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Río de Palabras</title>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #40bce6;
+      --color-text: white;
+      --color-bg: #000;
+      --font-main: 'Courier Prime', monospace;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--color-bg);
+      font-family: var(--font-main);
+      color: var(--color-text);
+      height: 100%;
+      overflow-y: none;
+    }
+
+    body {
+      position: relative;
+      min-height: 50vw;
+      margin-top: 60px;
+    }
+
+    #banner {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background-color: var(--color-bg);
+      color: #cfffff;
+      text-align: center;
+      font-family: var(--font-main);
+      font-size: 24px;
+      font-weight: bold;
+      padding: 15px 0;
+      z-index: 2000;
+      box-shadow: 0 1px 1px rgba(64, 188, 230, 0.4);
+    }
+
+    #toggle-audio {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: var(--color-bg);
+      border: 2px solid var(--color-primary);
+      color: var(--color-primary);
+      font-family: var(--font-main);
+      font-size: 16px;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 100px;
+      transition: all 0.5s ease;
+    }
+
+    #toggle-audio:hover {
+      background-color: #111;
+    }
+
+    #toggle-audio.tachado {
+      text-decoration: line-through;
+      opacity: 0.4;
+    }
+
+    .word {
+      position: absolute;
+      white-space: nowrap;
+      font-size: 18px;
+      opacity: 0.3;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    .word-blue {
+      color: var(--color-primary);
+      opacity: 0.3;
+    }
+
+    .link-word {
+      position: absolute;
+      font-size: 19px;
+      color: var(--color-text);
+      text-decoration: none;
+      pointer-events: auto;
+      opacity: 0.85;
+      z-index: 10;
+      font-family: var(--font-main);
+      cursor: pointer;
+      transition: transform 0.3s ease-out, opacity 0.3s ease;
+      will-change: transform;
+      transform: translate(-50%, -50%);
+      transform-origin: center;
+    }
+
+    .link-word:hover {
+      transform: translate(-50%, -50%) scale(1.36);
+      opacity: 1;
+      text-shadow: 0 0 8px var(--color-primary);
+      z-index: 100;
+    }
+
+    #modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.1);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    #modal.left {
+      justify-content: flex-start;
+    }
+
+    #modal.right {
+      justify-content: flex-end;
+    }
+
+    #modal-content {
+      background-color: black;
+      padding: 20px;
+      border-radius: 10px;
+      color: var(--color-text);
+      font-family: var(--font-main);
+      font-size: 14.8px;
+      max-width: 33vw;
+      max-height: auto;
+      margin: 10px;
+      box-shadow: 0 0 0px rgba(64, 188, 230, 0.6);
+      position: relative;
+      line-height: 1.6;
+    }
+
+    #modal-content h2 {
+      color: var(--color-primary);
+      margin-top: 0;
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 1.5em;
+    }
+
+    #modal-content p {
+      margin: 10px 0;
+    }
+
+    #close-modal {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: var(--color-text);
+      font-size: 20px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #close-modal.visible {
+      opacity: 0.1;
+    }
+
+    #mensaje-inicial {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #000813;
+      color: var(--color-text);
+      padding: 40px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      z-index: 1000;
+      width: 70%;
+      max-width: 500px;
+      opacity: 1;
+      transition: opacity 0.6s ease;
+    }
+
+    #mensaje-inicial.oculto {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #cerrar-mensaje {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 20px;
+      color: var(--color-text);
+      border: none;
+      background: none;
+    }
+
+    .contenido-mensaje {
+      text-align: center;
+      font-size: 19px;
+      line-height: 1.5;
+    }
+    
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+      border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #081231;
+      border-radius: 5px;
+      border: 2px solid #2a2f40;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #102464;
+    }
+  </style>
+</head>
+<body>
+  <div id="banner">
+    Río de Palabras
+    <button id="toggle-audio" class="tachado">Sonido</button>
+  </div>
+
+  <div id="mensaje-inicial">
+    <button id="cerrar-mensaje">&times;</button>
+    <div class="contenido-mensaje">
+     Cada palabra aquí es una gota.<br> Cada emoción una corriente.<br>Sumergete y navega a través de este río.
+     
+    </div>
+  </div>
+
+  <script>
+    // Cerrar mensaje al hacer click fuera 
+    document.addEventListener('click', function(e) {
+      const mensaje = document.getElementById('mensaje-inicial');
+      if (mensaje && !mensaje.classList.contains('oculto')) {
+        if (!e.target.closest('#mensaje-inicial')) {
+          mensaje.classList.add('oculto');
+        }
+      }
+    });
+
+    // Cerrar mensaje con el botón
+    document.getElementById('cerrar-mensaje').addEventListener('click', function() {
+      document.getElementById('mensaje-inicial').classList.add('oculto');
+    });
+  </script>
+
+  <audio id="rio-audio" loop>
+    <source src="rio.mp3" type="audio/mp3">
+  </audio>
+
+  <div id="modal">
+    <div id="modal-content">
+      <button id="close-modal">&times;</button>
+      <div id="modal-text"></div>
+    </div>
+  </div>
+
+  <script>
+    const words = [
+      "flujo", "río", "sentido", "caudal", "corriente", "pensamiento", "verso", "creación", "ideas", 
+      "calma", "poemas", "melancolía", "refugio", "nostalgia", "tristeza", "alegría", "contemplar", "correr", 
+      "mojarse", "bailar", "frío", "suspiro", "miedo", "irritación", "paz", "dormir", "llorar", "pensar", 
+      "escribir", "observar", "temblar", "silencio", "abrigarse", "fluir", "esconderse", "recordar", "ansiedad", 
+      "libertad", "extrañar", "evocar", "reconciliarse", "tormenta", "perderse", "buscarse", "soñar", "escuchar", 
+      "flotar", "pureza", "hundimiento", "escurrir", "introspección", "caminar", "abrazar", "insomnio", "ahogarse", 
+      "catarsis", "liberación", "palabra", "memoria", "ansiedad", "ensueño", "cascada"
+    ];
+
+    const modalWords = {  
+      "tormenta": {
+        texto: "Oh sublime casos que arrancas lo que ya no es necesario\n\ny dejas fecundo para seguir germinando esos sueños\n\nque tal vez haya querido abandonarlos por la turbación\ngenerada por el viento huracanado y la lluvia torrencial de emoción,\n\nque solo se disipan bajo la esperanza de un nuevo mañana.\n\n-Mauricio García", 
+        lado: "left"
+      },
+      "fluir": {
+        texto: "“Quisiera fluir como el agua, ser un alma transparente y serena, discurriendo con calma, sin problemas. Reflejando la luz del sol en mis venas, ligero, incapaz de dejar alguna huella”. – Daniel Calao.\n\n“Ser como el río que fluye, silencioso en medio de la noche, \n\nNo temer las tinieblas de la noche. Si hay estrellas en el cielo, reflejarlas. Y, si los cielos se cubren de nubes, como el río, las nubes son agua; reflejarlas también sin pena en las profundidades tranquilas”. – Manoel Bandeira.\n\n“El agua es una materia que invita a la meditación, a la ensoñación. Es la imagen de la vida que fluye, que se transforma”. – Gastón Bachelard.", 
+        lado: "right"
+      },
+      "mojarse": {
+        texto: "Una leve llovizna formó un cauce entre nosotros.\nParecía pequeña, pero despertó el temor a mojarnos.\nCreció, tomó fuerza.\nNuestros pensamientos no ayudaron a que la lluvia cesara.\nLa tormenta llegó, separando nuestros caminos.\nMiedo, ira, ansiedad y tristeza flotaban en la niebla.\nVimos una posible tregua... pero fue un espejismo.\nLa niebla comenzó a disiparse, pero no lograba encontrarte.\nEso me preocupaba aún más.\n\nDecidí mojarme y saltar.\nContigo, la tormenta no importaba.\nLas gotas en la ventana eran mis lágrimas.\nPensé que sería la última vez.\nUna charla calmó la tormenta.\nCaminamos de nuevo, juntos en nuestra independencia.\nLa lluvia al volver a casa me dio paz,\nuna esperanza nueva.\n\nPero aún me pregunto:\n¿cesó realmente la lluvia,\no mojarme me dejó los zapatos humedos y el corazón ingenuo?\nquizás solo comienza la peor tormenta.\n\n-Santiago Tuberquia", 
+        lado: "left"
+      },
+      "insomnio": {
+        texto: "Las gotas en mi ventana\nme invitan a abrir los ojos.\nLa noche se hace eterna,\ny dormir se vuelve distante.\n\nEl ruido de la lluvia\nse suma a la tormenta\nque recorre mis pensamientos.\n\n¿Podrá la lluvia cesar\ny darme paz?\nSolo quiero que pase el aguacero,\ny que esta vez,\nno me moje el alma.\n\n-Santiago Tuberquia", 
+        lado: "right"
+      },
+      "ahogarse": {
+        texto: "Hundirse no duele.\nEs más bien ceder.\n\nEl agua no golpea,\nsolo abraza,\ncon ese frío que nadie pide,\ncon ese peso\nque no grita,\npero arrastra.\n\nSe parece a la soledad:\ntransparente,\nnadie la ve llegar\nhasta que te cubre.\n\nAdentro,\ntodo suena lejos.\nLa piel ya no toca el mundo.\nLos ojos se abren\ny lo último que ven\nes la luz\ntratando de alcanzarte\n\n-Maggie", 
+        lado: "left"
+      },
+      "tristeza": {
+        texto: "- 'Qué triste se oye la lluvia'\nSe escuchan truenos y se siente la agonía con la que caen las gotas.\nLa maleza sigue creciendo y el frío abraza todo a su alrededor.\nQué triste se oye la lluvia,\nqué triste se siente el descenso,\nqué triste se siente este derrumbe de saber que nunca me referí al exterior,\nsolo encontré un día lluvioso para expresar lo triste que es sentir tanta tormenta en el corazón.\n\n-Anónimo", 
+        lado: "right"
+      },
+      "creciente": {
+          texto: "Cambios inesperados, refuerzos necesarios\nExistencia prevenida,\n Consejo aceptado\nInocencia vulnerada\nEmpatia engañada\nNovela hecha vida\nTiempo sin juicio\nEs la realidad en la que hoy vivo\n\n-Mauricio García",
+          lado: "right"
+      },
+      "catarsis": {
+        texto: "Era un concierto al aire libre. Habían pasado apenas unas semanas desde la separación.\nMe sentía extraño: ni del todo triste, ni del todo fuerte.\nComo si cargara un peso que no sabía dónde ubicar.\n\nEntonces empezó a llover.\nPodía irme, buscar un techo, correr como todos los demás.\nPero no lo hice.\nMe quedé. Cerré los ojos. Dejé que el agua me empapara.\n\nLa música seguía sonando mientras las gotas caían sobre mi rostro,\ncomo si el cielo también llorara lo que no sabía cómo soltar.\nNo era tristeza, era alivio.\nComo si cada gota lavara una despedida que llevaba atragantada.\n\nA veces, dejarse mojar es la forma más silenciosa de hacer duelo.\nY la más honesta.\n\n- Anécdota: Alberto Castrillón", 
+        lado: "left"
+      },
+      "palabra": {
+        texto: "Cada palabra tiene un peso, una humedad, una memoria.\nAlgunas arden, otras enfrían. Otras simplemente… gotean.\n\nAquí, la palabra es el centro:\nes punto de partida para abrir emociones,\nrecordar lo que se ha vivido o imaginar lo que no se ha dicho.\n\nLa lluvia es el puente:\nentre el adentro y el afuera,\nentre lo dicho y lo sentido.\n\nTe invitamos a recorrer un territorio donde cada término es lluvia:\nsuave, torrencial, persistente o pasajera.\n\n-Isabela Castrillón",
+        lado: "right"
+      },
+      "suspiro": {
+        texto: "La lluvia es como un suspiro del cielo, un suspiro que abraza y acaricia el alma. No es solo agua que cae; es un canto suave que habla de calma, de pausas necesarias.\n\nEs serenidad líquida, un espejo de lo que siento cuando todo tiene sentido. Una melodía que no se canta, pero se siente.\n\nCuando llueve, todo parece detenerse... y en esa pausa, encuentro tranquilidad. Es como si la vida susurrara al oído: 'Todo estará bien'.\n\nLas gotas limpian el aire y mis pensamientos. También me hacen pensar en ti. Quisiera compartir ese instante contigo, bajo el mismo cielo, sin palabras, solo sintiendo.\n\nNo necesito mucho: tu compañía, el sonido del agua... y que el mundo pueda esperar.\n\n-Julián Alemán", 
+        lado: "left"
+      },
+      "liberación": {
+        texto: "'Cada gota que cae es un suspiro del cielo que me enseña a soltar, a respirar en paz'.\n\nEra un concierto al aire libre. Habían pasado apenas unas semanas desde la separación.\nMe sentía extraño: ni del todo triste, ni del todo fuerte. Como si cargara un peso que no sabía dónde ubicar.\nEntonces empezó a llover.\nPodía irme, buscar un techo, correr como todos los demás. Pero no lo hice.\nMe quedé. Cerré los ojos. Dejé que el agua me empapara.\n\nLa música seguía sonando mientras las gotas caían sobre mi rostro,\ncomo si el cielo también llorara lo que no sabía cómo soltar.\nNo era tristeza, era alivio.\nComo si cada gota lavara una despedida que llevaba atragantada.\n\nA veces, dejarse mojar es la forma más silenciosa de hacer duelo.\nY la más honesta.\n\n– Alberto Castrillón", 
+        lado: "right"
+      },
+      "cascada": {
+        texto: "Fuimos al río,\ncharcos escondidos entre piedras y árboles.\nMientras bajábamos,\nel rumor del agua crecía como un llamado.\n\nEntonces la vi:\nenorme, imponente,\nhermosa sin esfuerzo.\nEl agua caía con fuerza,\ncristalina, viva, libre.\n\nMi familia se lanzó al agua,\njugaba, reía.\nYo me senté en una piedra,\nen silencio, contemplando,\ndejando que la brisa me rozara\ncomo una caricia o un abrazo al alma.\n\nNo dije nada.\nSolo escuché el rugido constante,\nsentí el vapor frío en mi piel,\ny algo dentro de mí se calmó.\n\nNo necesitaba más.\nEn ese instante,\nestar viva era suficiente.\n\nLa cascada no solo caía,\nfluía como un rezo.\nY yo, quieta,\nescuchaba su verdad.\n\n– Isabela Castrillón", 
+        lado: "left"
+      },
+      "pureza": {
+        texto: "Siempre me he sumergido y casi ahogado con el firme propósito de limpiar todo pero jamás comprendía qué mi alma no se limpiaría.\n\nLa pureza que deseaba solo la alcanzaba alejándome del rencor que permitía qué habitara en mi alma.\n\nLa pureza de perdonar y ser perdonado se convirtió en un precioso manantial de agua pura y cristalina qué logró la pureza qué yo quería.\n\n-Mauricio García", 
+        lado: "right"
+      },
+      "hundimiento": {
+        texto: "Me estoy hundiendo.\nNo en un lago, ni en un río.\nMe hundo en mí misma.\nCada día algo más se desprende,\ncomo si mi cuerpo se volviera agua sucia que no encuentra orilla.\nLa vida pesa.\nLa gente sigue.\nYo me ahogo en lo invisible:\nlas expectativas, los silencios, los pensamientos que revientan por dentro.\nNo hay salvavidas para esto.\nNo hay quien vea la marea que sube cuando sonrío por inercia y por dentro grito.\nMe hundo sin hacer ruido,\ncomo quien ha aprendido a caer sin que nadie lo note.\nEl agua que antes me calmaba,\nahora me cubre los ojos, los pulmones, el alma.\nY lo más triste no es el fondo.\nEs saber que me hundo\ny que nadie lo ve.\n\n-Isabela Castrillón", 
+        lado: "left"
+      },
+      "río": { 
+        texto: "Soy río,\nno por la prisa,\nsino por la constancia.\nFluyo entre piedras,\nme adapto, me extiendo,\nabrazo la forma de lo que me hiere\nsin dejar de ser agua.\n\nEn mi andar,\nllevo secretos,\nsilencios,\ny también reflejos.\n\nNo busco destino,\nsolo sigo.\nPorque incluso al perderme,\nme encuentro.\n\n-Isabella Castrillón",
+        lado: "right"
+      },
+      "memoria": { 
+        texto: "Dicen que el agua tiene memoria.\nQue recuerda lo que toca, lo que atraviesa, lo que arrastra.\nQue guarda en su cuerpo las formas del viento,\nlos ecos de las piedras, el calor de las manos que alguna vez la contuvieron.\nEl agua no olvida.\nPor eso, cuando llueve, algo se remueve en nosotros.\nNo es solo humedad:\nes pasado que se vuelve líquido, es emoción que busca desembocar en algún lado.\nEn cada gota, hay un fragmento de lo que fuimos.\nUna palabra no dicha, una ausencia,\nun llanto, una despedida...\nQuizás por eso,\ncuando la vemos correr, cuando la escuchamos caer,\nsentimos una nostalgia que no sabemos explicar.\nComo si el agua supiera algo de nosotros\nque hemos olvidado o aún no hemos recordado.\n\n-Isabela Castrillón",
+        lado: "left"
+      },
+      "ensueño": {
+          texto: "El agua es la materia de un ensueño sin imágenes,\nde un ensueño sin drama.\nEs una presencia sin peso,\nuna profundidad sin fondo,\nuna dulzura sin amargura.\n\nFluye, eterna, tejiendo silencios.\nEs la caricia que no pide,\nel abrazo que no oprime,\nun secreto antiguo en lo hondo del alma.\n\nEl agua nos susurra la calma,\nla promesa de renovación,\nel eco de todo lo que fue y será,\nsin juicios.\n\nEs el latido líquido de la tierra,\nla cuna de la vida,\nun espejo sereno donde el universo se mira.\n\n-Gaston Bachelard",
+          lado: "right"
+      },
+      "ansiedad": {
+          texto: "La ansiedad es un río desbordado,\nun cauce que ha perdido su orilla.\nNo es la lluvia suave que nutre la tierra.\nEs la tormenta repentina que irrumpe sin aviso,\nla crecida perturbadora que arrastra lo familiar\ny lo transforma en un paisaje irreconocible.\n\n-Santiago Tuberquia",
+          lado: "left"
+      },
+      "ausencia": {
+          texto: "Es la sombra del agua,\nno una oscuridad tangible,\nsino la huella impalpable de lo que ha sido.\nEs el rastro simple de una mirada que se perdió en su superficie,\nel vestigio de una emoción que el tiempo ha intentado borrar.\nEn sus profundidades,\nel agua guarda la memoria de una ausencia.\n\n-Sergio Sánchez",
+          lado: "right"
+      },
+      "condena": {
+          texto: "La lluvia llegó sin aviso.\nÉl, tiritando bajo cartones empapados,\nsintió cada gota como un golpe,\ncada charco como un abismo.\nPara otros, el agua era goce; para él, castigo.\nNo traía limpieza ni calma,\nsolo frío, sarna y el eco de viejos recuerdos.\n\nRecordó la calidez de un hogar,\nuna madre cantando bajo la lluvia.\nPero ese pasado era ahora tan distante\ncomo el sol en un día gris.\nLa lluvia le borraba el nombre del asfalto,\nlo convertía en una sombra,\nun estorbo que nadie veía.\n\nQuiso gritar, pero el cielo lo ahogaba.\nCerró los ojos, deseando que al dejarse empapar por completo,\npudiera desvanecerse.\nPero no.\nSeguía allí, mojado, sucio, invisible.\nY la ciudad, impasible, continuaba su rumbo.\n\n-Sergio Sánchez",
+          lado: "left"
+      },
+      "frialdad": {
+          texto: "Estoy aquí,\nbajo un puente que no abriga,\ncon los pies encharcados de olvido.\nEl agua se cuela por los cartones,\nsu peso arrolla mi cuerpo.\n\nPero más frío que la lluvia es el mundo,\nmás dura que la piedra, la indiferencia.\nY más vacío que mi estómago,\nla forma en que todos me miran sin verme.\n\n-Isabela Castrillón",
+          lado: "right"
+      },
+      "desembocadura": {
+          texto: "Todo río halla su destino: después de montañas y valles, de arrastrar historias, llega a su desembocadura.\nAllí, el agua se vuelve mar, el cauce se abre y lo contenido se expande.\n\nAsí son ciertos momentos del alma. Procesos largos, emociones y duelos que buscan salida, todo llega a su propia desembocadura.\nNo siempre es calma; a veces duele soltar, a veces el río teme al mar.\n\nPero no hay destino sin entrega. La desembocadura no es un final, es transformación.\nEs el instante de no resistir y atreverse a ser más grande.\nEl agua no desaparece, solo cambia.\n\n-Isabela Castrillón",
+          lado: "left"
+      },
+      "reflejo": {
+          texto: "Nos miramos en el agua para encontrar lo que el espejo no revela.\nNo es la imagen nítida y estática que devuelve el cristal,\nsino una verdad más profunda, más líquida y cambiante,\nque reside en la superficie de un lago o la corriente de un río.\nEn esa danza de luz y sombra,\nen el vaivén de las ondulaciones,\nbuscamos las formas etéreas de nuestros pensamientos,\nlos matices ocultos de nuestras emociones,\naquello que se esconde detrás de la solidez de una figura.\n\n-Santiago Tuberquia",
+          lado: "left"
+      },
+      
+      "origen":{
+          texto: "El agua es origen. Todo nace en ella.\nEl primer latido ocurrió sumergido,\nenvuelto en líquido, suspendido en silencio.\nEs cuna del mundo, vientre que nutre,\nfuente que hace brotar la vida desde lo más árido.\nDonde hay agua, hay posibilidad.\nPero el agua también sabe arrebatar.\nCuando se enfurece, no perdona.\nInunda, rompe, se lleva.\nTiene la suavidad de una caricia y la fuerza brutal de una sentencia.\nPuede ser alivio o castigo, bendición o ruina.\nPuede darlo todo…\no quitártelo en un segundo.\nPor eso es frontera.\nEs el umbral entre lo que nace y lo que muere.\nEntre lo que florece y lo que desaparece.\nEl agua no es buena ni mala. Es absoluta.\nComo la existencia misma: abarca el principio y el final.\n\n-Isabela Castrillón",
+          lado: "right"
+      },
+      "transparencia": {
+          texto: "El agua es transparente, y aun así contiene mundos.\nSe deja mirar, permitiendo que la luz la atraviese y revele lo que hay más allá de su superficie, pero nunca se revela del todo.\nGuarda en su esencia la profundidad de secretos inabarcables,\nla memoria de lo que fue y el misterio de lo que será,\ncomo un velo líquido que invita a la contemplación sin desvelar por completo su ser.\n\n-Santiago Tuberquia",
+          lado: "left"
+      },
+      "desesperación": {
+          texto: "Se siente en el cuerpo,\ncomo si algo apretara el pecho desde adentro.\nComo si cada pensamiento pesara más que el anterior.\n\nUno intenta nadar, pero no hay orilla.\nSolo cansancio. Solo el miedo de hundirse sin haber aprendido a pedir ayuda.\n\nEs agua que se agita sola.\nNo por viento, sino por todo lo que no se dice.\nPor todo lo que se guarda.\nY aun así,\na veces basta una grieta de luz, una palabra, una pausa,\npara que el nivel baje\ny podamos, al menos por un momento, volver a respirar.\n\n-Isabela Castrillón",
+          lado: "right"
+      },
+      "corriente": {
+          texto: "Hay corrientes que no buscan hundirte, solo llevarte a otro lugar.\nTe resistes, te aferras a la orilla,\npero el agua insiste: muévete.\nConfía.\nA veces la corriente sabe más que el miedo\nNo es renuncia, es fluir con lo que no puedes controlar\npero que, de alguna manera, te está guiando.",
+          lado: "left"
+      },
+      "perdida":{
+          texto:"Todavía escucho el murmullo del agua que solía estar entre nosotros.\nNo vuelve, pero tampoco se va del todo.\n\n-Sergio Sánchez"
+      },
+      "angustia":{
+          texto: "Se mueve adentro, como un oleaje sin ritmo que golpea donde no hay orilla.\nNo se ve, pero pesa.\n No se escucha, pero retumba.\nEs un ahogo sin agua, un nudo líquido que se niega a salir.\nA veces parece sed, otras veces diluvio.\n Un líquido extraño que no limpia,\n que no calma, que solo insiste.\nEs la lluvia que cae por dentro cuando el cielo no se atreve a llorar.\nEs saber que algo se inunda,\n pero no encontrar la grieta por donde dejarlo ir.\nY aunque nadie la nombra, ella está.\n Mojando los bordes del alma,\n esperando a que alguien escuche\n el sonido sordo de su desbordamiento.\n\n-Anónimo"
+      },
+      "rocio":{
+          texto: "No todos los cuerpos descansan en tierra.\n Algunos quedaron atrapados\n bajo agua negra o piedra mojada,\n donde la luz no llega, donde el tiempo se detiene.\nSe hundieron barcos, se hundieron casas, se hundieron nombres.\n Y con ellos, los sueños que llevaban puestos,\n las palabras no dichas, las cartas no enviadas.\nEl mar no los devolvió.\n La tierra los cerró sin despedida.\nA veces los recordamos en titulares,\n otras veces, en silencio.\n Pero hay algo que no se borra:\n ese instante en que supieron que no volverían a la superficie.\nMurieron con los ojos abiertos, mirando hacia arriba,\n tal vez buscando cielo, tal vez pensando en alguien.\nNo fue olvido, fue destino torcido.\n Y aún así, hay algo sagrado en su caída:\n fueron tragados por la historia, pero siguen vivos\n en la memoria de las aguas.\n\nIsabela Castrillón"
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Configuración
+      const CONFIG = {
+        MAX_LINKWORDS: 30,
+        WHITE_WORDS: 70,
+        BLUE_WORDS: 70,
+        MIN_DISTANCE: 320,
+        MARGIN: 50,
+        WORD_SPEED: 0.4,
+        INACTIVITY_TIME: 84000,
+        INITIAL_DELAY: 600
+      };
+
+      // Obtener palabras disponibles y mezclarlas
+      const availableLinkWords = Object.keys(modalWords); 
+      const shuffledLinkWords = [...availableLinkWords]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, Math.min(CONFIG.MAX_LINKWORDS, availableLinkWords.length));
+      
+      // Configuración inicial
+      const bannerHeight = document.getElementById('banner').offsetHeight;
+      document.body.style.marginTop = `${bannerHeight}px`;
+      
+      // Variables para animación
+      const centerX = window.innerWidth / 2.2;
+      const amplitude = window.innerWidth * 0.065;
+      const frequency = 0.005;
+      const wordElements = [];
+      const blueWordElements = [];
+      let animationId;
+      
+      function createWords() {
+        const container = document.body;
+        const existingPositions = [];
+        
+        // Palabras normales (blancas)
+        for (let i = 0; i < CONFIG.WHITE_WORDS; i++) {
+          const word = document.createElement('span');
+          const randomWord = words[Math.floor(Math.random() * words.length)];
+          
+          word.className = 'word';
+          word.textContent = randomWord;
+          word.style.left = `${Math.random() * window.innerWidth}px`;
+          word.style.top = `${Math.random() * window.innerHeight}px`;
+          word.dataset.phase = Math.random() * Math.PI * 2;
+          word.dataset.speed = 0.5 + Math.random() * 0.4;
+          
+          container.appendChild(word);
+          wordElements.push(word);
+        }
+
+        // Palabras interactivas (link-words)
+        shuffledLinkWords.forEach((wordText) => {
+          const word = document.createElement('span');
+          let x, y, isValid;
+          let attempts = 0;
+          const MAX_ATTEMPTS = 50;
+
+          do {
+            x = CONFIG.MARGIN + Math.random() * (window.innerWidth - 2 * CONFIG.MARGIN);
+            y = CONFIG.MARGIN + Math.random() * (window.innerHeight - 2 * CONFIG.MARGIN);
+            attempts++;
+            
+            isValid = existingPositions.every(pos => {
+              const dx = pos.x - x;
+              const dy = pos.y - y;
+              return Math.sqrt(dx * dx + dy * dy) >= CONFIG.MIN_DISTANCE;
+            });
+          } while (!isValid && attempts < MAX_ATTEMPTS);
+
+          existingPositions.push({ x, y });
+
+          word.className = 'link-word';
+          word.textContent = wordText;
+          word.style.left = `${x}px`;
+          word.style.top = `${y}px`;
+          word.dataset.phase = Math.random() * Math.PI * 2;
+          word.dataset.speed = CONFIG.WORD_SPEED;
+          word.dataset.paused = 'false';
+          word.dataset.originalLeft = x;
+          word.dataset.originalTop = y;
+
+          word.addEventListener('mouseenter', function(e) {
+            e.stopPropagation();
+            this.dataset.paused = 'true';
+            this.style.zIndex = '100';
+          });
+
+          word.addEventListener('mouseleave', function(e) {
+            e.stopPropagation();
+            this.dataset.paused = 'false';
+            this.style.zIndex = '10';
+          });
+
+          word.addEventListener('click', function(e) {
+            e.stopPropagation();
+            showModal(wordText, modalWords[wordText].lado);
+          });
+
+          container.appendChild(word);
+          wordElements.push(word);
+        });
+
+        // Palabras azules (decorativas)
+        for (let i = 0; i < CONFIG.BLUE_WORDS; i++) {
+          const word = document.createElement('span');
+          const randomWord = words[Math.floor(Math.random() * words.length)];
+          
+          word.className = 'word word-blue';
+          word.textContent = randomWord;
+          word.style.left = `${Math.random() * window.innerWidth}px`;
+          word.style.top = `${Math.random() * window.innerHeight}px`;
+          word.dataset.phase = Math.random() * Math.PI * 2;
+          word.dataset.speed = 0.3 + Math.random() * 0.4;
+          
+          container.appendChild(word);
+          blueWordElements.push(word);
+        }
+      }
+      
+      function animateWords() {
+        const now = Date.now();
+        const timeFactor = now * 0.0001;
+        
+        wordElements.forEach(word => {
+          if (word.dataset.paused === 'true') return;
+          
+          const phase = parseFloat(word.dataset.phase);
+          const wordSpeed = parseFloat(word.dataset.speed);
+          let top = parseFloat(word.style.top);
+          
+          top += wordSpeed;
+          if (top > window.innerHeight + 50) {
+            top = -50;
+            word.style.left = `${Math.random() * window.innerWidth}px`;
+          }
+          
+          const x = centerX + Math.sin((top * frequency) + phase + timeFactor) * amplitude;
+          
+          word.style.left = `${x}px`;
+          word.style.top = `${top}px`;
+          word.dataset.originalLeft = x;
+          word.dataset.originalTop = top;
+        });
+        
+        blueWordElements.forEach(word => {
+          let top = parseFloat(word.style.top);
+          const phase = parseFloat(word.dataset.phase);
+          const wordSpeed = parseFloat(word.dataset.speed);
+          
+          top += wordSpeed * 0.7;
+          if (top > window.innerHeight + 50) {
+            top = -50;
+            word.style.left = `${Math.random() * window.innerWidth}px`;
+          }
+          
+          const x = centerX + Math.cos((top * frequency) + phase + timeFactor) * (amplitude * 1.2);
+          
+          word.style.left = `${x}px`;
+          word.style.top = `${top}px`;
+        });
+
+        animationId = requestAnimationFrame(animateWords);
+      }
+
+      // Función para mostrar el modal con efecto máquina de escribir
+      function showModal(word, side) {
+        const modal = document.getElementById('modal');
+        const modalContent = document.getElementById('modal-content');
+        const modalText = document.getElementById('modal-text');
+        const closeButton = document.getElementById('close-modal');
+        
+        // Limpiar y configurar modal
+        modalText.innerHTML = '';
+        modal.className = side;
+        modal.style.display = 'flex';
+        
+        // Crear elemento de título
+        const titleElement = document.createElement('h2');
+        titleElement.textContent = word;
+        modalText.appendChild(titleElement);
+        
+        // Obtener el texto del modal
+        const content = modalWords[word].texto;
+        
+        // Dividir el texto en párrafos (separados por doble salto de línea)
+        const paragraphs = content.split(/\n\s*\n/);
+        
+        // Crear elementos de párrafo
+        const pElements = paragraphs.map(p => {
+          const pElem = document.createElement('p');
+          modalText.appendChild(pElem);
+          return pElem;
+        });
+        
+        // Velocidad de escritura (en ms por caracter)
+        const typingSpeed = 14.5;
+        
+        // Deshabilitar el botón de cerrar inicialmente
+        closeButton.classList.remove('visible');
+        let canClose = false;
+        
+        // Habilitar el cierre después de 3 segundos
+        setTimeout(() => {
+          canClose = true;
+          closeButton.classList.add('visible');
+        }, 3000);
+        
+        // Función para escribir un párrafo
+        function typeParagraph(pIndex, charIndex) {
+          if (pIndex >= paragraphs.length) {
+            return;
+          }
+          
+          const currentParagraph = paragraphs[pIndex];
+          const pElem = pElements[pIndex];
+          
+          if (charIndex < currentParagraph.length) {
+            pElem.textContent += currentParagraph.charAt(charIndex);
+            setTimeout(() => typeParagraph(pIndex, charIndex + 1), typingSpeed);
+          } else {
+            setTimeout(() => typeParagraph(pIndex + 1, 0), typingSpeed * 2);
+          }
+        }
+        
+        // Comenzar a escribir el primer párrafo
+        typeParagraph(0, 0);
+        
+        // Cerrar modal al hacer click fuera
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal && canClose) {
+            modal.style.display = 'none';
+          }
+        });
+        
+        // Cerrar modal con el botón
+        closeButton.addEventListener('click', function() {
+          if (canClose) {
+            modal.style.display = 'none';
+          }
+        });
+      }
+
+      // Control de audio
+      const audio = document.getElementById('rio-audio');
+      const toggleAudio = document.getElementById('toggle-audio');
+      
+      toggleAudio.addEventListener('click', function() {
+        if (audio.paused) {
+          audio.play();
+          this.classList.remove('tachado');
+        } else {
+          audio.pause();
+          this.classList.add('tachado');
+        }
+      });
+
+      // Temporizador de inactividad
+      let lastActivity = Date.now();
+      
+      function resetInactivityTimer() {
+        lastActivity = Date.now();
+      }
+      
+      function checkInactivity() {
+        if (Date.now() - lastActivity > CONFIG.INACTIVITY_TIME) {
+          document.getElementById('mensaje-inicial').classList.remove('oculto');
+          lastActivity = Date.now();
+        }
+      }
+
+      // Event listeners de actividad
+      ['mousemove', 'click', 'scroll'].forEach(event => {
+        window.addEventListener(event, resetInactivityTimer);
+      });
+      
+      const inactivityInterval = setInterval(checkInactivity, 1000);
+
+      // Iniciar
+      createWords();
+      animateWords();
+      
+      setTimeout(function() {
+        document.getElementById('mensaje-inicial').classList.remove('oculto');
+      }, CONFIG.INITIAL_DELAY);
+
+      // Limpieza al salir
+      window.addEventListener('beforeunload', () => {
+        cancelAnimationFrame(animationId);
+        clearInterval(inactivityInterval);
+      });
+    });
+  </script>
+</body>
+</html>
+
+
